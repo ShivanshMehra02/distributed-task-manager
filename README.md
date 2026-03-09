@@ -86,7 +86,7 @@ A full-stack collaborative task management application with **real-time synchron
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/task-manager.git
+git clone https://github.com/ShivanshMehra02/distributed-task-manager.git
 cd task-manager
 ```
 
