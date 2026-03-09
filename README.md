@@ -118,21 +118,62 @@ The frontend will start on `http://localhost:3000`.
 
 ### Backend (`backend/.env`)
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `8001` |
-| `MONGO_URL` | MongoDB connection string | `mongodb://localhost:27017` |
-| `DB_NAME` | Database name | `task_manager` |
-| `JWT_SECRET` | Secret key for JWT signing | *(required)* |
-| `JWT_EXPIRES_IN` | Token expiration duration | `24h` |
-| `CLIENT_URL` | Frontend URL for CORS | `http://localhost:3000` |
+```env
+PORT=8001
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=task_manager
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRES_IN=24h
+CLIENT_URL=http://localhost:3000
+```
+
+| Variable | Used In | What It Does |
+|----------|---------|--------------|
+| `PORT` | `config/index.js` → `server.listen(config.port)` | Port the Express server binds to |
+| `MONGO_URL` | `config/index.js` → `mongoose.connect(mongoUrl/dbName)` | MongoDB connection string (host only, no DB name) |
+| `DB_NAME` | `config/index.js` → appended to `MONGO_URL` | Database name — final URI becomes `mongodb://localhost:27017/task_manager` |
+| `JWT_SECRET` | `authService.js` → `jwt.sign()` / `auth.js` middleware → `jwt.verify()` | Secret key for signing and verifying JWT tokens |
+| `JWT_EXPIRES_IN` | `authService.js` → `jwt.sign({ expiresIn })` | Token lifetime — `24h` means tokens expire after 24 hours |
+| `CLIENT_URL` | `config/index.js` | Intended for restricting CORS origin in production (currently unused — server uses `*`) |
+
+> **Note:** `CLIENT_URL` is not currently read by the CORS middleware (which is set to `*`). It's a placeholder for production use.
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL (e.g. `http://localhost:8001`) |
-| `NEXT_PUBLIC_SOCKET_URL` | Socket.io server URL (e.g. `http://localhost:8001`) |
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8001/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:8001
+```
+
+| Variable | Used In | What It Does |
+|----------|---------|--------------|
+| `NEXT_PUBLIC_API_URL` | `lib/api.js` → `axios.create({ baseURL })` | Must include `/api` at the end — all axios calls use relative paths like `/projects`, `/tasks` |
+| `NEXT_PUBLIC_SOCKET_URL` | `lib/socket.js` → `io(SOCKET_URL, { path: '/api/socket.io' })` | Server origin only, without `/api` — the socket path is hardcoded as `/api/socket.io` |
+
+> ⚠️ **Critical distinction:**
+> ```
+> NEXT_PUBLIC_API_URL    = http://localhost:8001/api   ← with /api
+> NEXT_PUBLIC_SOCKET_URL = http://localhost:8001        ← without /api
+> ```
+> If you set `NEXT_PUBLIC_API_URL` without `/api`, every frontend request hits `/projects` instead of `/api/projects` and you'll get 404s.
+
+### For Production / Deployed Environment
+
+**Backend `.env`:**
+```env
+PORT=8001
+MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net
+DB_NAME=task_manager
+JWT_SECRET=a_strong_random_secret_at_least_32_chars
+JWT_EXPIRES_IN=24h
+CLIENT_URL=https://your-frontend-domain.com
+```
+
+**Frontend `.env`:**
+```env
+NEXT_PUBLIC_API_URL=https://your-domain.com/api
+NEXT_PUBLIC_SOCKET_URL=https://your-domain.com
+```
 
 ---
 
